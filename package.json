@@ -1,7 +1,7 @@
 {
   "name": "nativefiledialog.js",
   "version": "0.1.0",
-  "description": "JS FFI bindings for nativefiledialog-extended using node:ffi and bun:ffi",
+  "description": "JavaScript/TypeScript nativefiledialog-extended bindings for Node.js and Bun.",
   "license": "MIT",
   "files": [
     "dist",

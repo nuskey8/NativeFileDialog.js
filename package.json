@@ -20,6 +20,7 @@
   "scripts": {
     "build:native": "cmake-js compile",
     "build": "vp run build:native && vp pack",
+    "prepublishOnly": "vp pack",
     "example": "node examples/dialog.ts"
   },
   "devDependencies": {

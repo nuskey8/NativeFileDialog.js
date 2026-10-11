@@ -43,4 +43,6 @@ try {
 
 ## License
 
-[MIT](LICENSE). nativefiledialog-extended uses the [zlib license](nativefiledialog/LICENSE).
+This library is licensed under the [MIT](LICENSE). 
+
+nativefiledialog-extended is licensed under the [zlib license](nativefiledialog/LICENSE).

@@ -1,5 +1,8 @@
 # NativeFileDialog.js
 
+[![npm version](https://img.shields.io/npm/v/nativefiledialog.js)](https://www.npmjs.com/package/nativefiledialog.js)
+[![GitHub release](https://img.shields.io/github/v/release/nuskey8/NativeFileDialog.js)](https://github.com/nuskey8/NativeFileDialog.js/releases/latest)
+
 JavaScript/TypeScript [nativefiledialog-extended](https://github.com/btzy/nativefiledialog-extended) bindings for Node.js and Bun.
 
 ## Installation

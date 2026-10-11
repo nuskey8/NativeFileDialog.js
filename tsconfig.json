@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "types": ["node", "bun"],
+    "lib": ["ESNext"]
+  },
+  "include": ["src/**/*.ts", "examples/**/*.ts", "test/**/*.ts", "vite.config.ts"],
+  "exclude": ["nativefiledialog", "dist", "node_modules"]
+}

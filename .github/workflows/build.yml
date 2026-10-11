@@ -1,0 +1,162 @@
+name: Build package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: ${{ matrix.platform }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: macos-15-intel, platform: darwin, arch: x64 }
+          - { runner: macos-15, platform: darwin, arch: arm64 }
+          - { runner: windows-2022, platform: win32, arch: x64 }
+          - { runner: windows-2022, platform: win32, arch: arm64 }
+          - { runner: ubuntu-22.04, platform: linux, arch: x64 }
+          - { runner: ubuntu-22.04-arm, platform: linux, arch: arm64 }
+    defaults:
+      run:
+        shell: bash
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version-file: .node-version
+          run-install: false
+          cache: true
+      - run: vp install --frozen-lockfile
+      - name: Install GTK development libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwayland-dev libx11-dev pkg-config
+      - name: Remove previously built binaries
+        run: |
+          vp exec node --input-type=module -e 'import { rmSync } from "node:fs"; rmSync("lib", { recursive: true, force: true });'
+      - run: vp exec cmake-js compile --arch ${{ matrix.arch }}
+      - name: Check Node FFI loading
+        if: matrix.platform != 'win32' || matrix.arch == 'x64'
+        run: |
+          vp exec node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import { dlopen, toString } from "node:ffi";
+            import { libraryPath } from "./src/common.ts";
+            using lib = dlopen(libraryPath(), {
+              NFD_GetError: { arguments: [], return: "pointer" },
+              NFD_FreePathU8: { arguments: ["pointer"], return: "void" },
+            });
+            assert.equal(toString(lib.functions.NFD_GetError()), null);
+          '
+      - name: Check Bun FFI loading
+        if: matrix.platform != 'win32' || matrix.arch == 'x64'
+        run: |
+          vp exec bun --eval '
+            import assert from "node:assert/strict";
+            import { dlopen } from "bun:ffi";
+            import { libraryPath } from "./src/common.ts";
+            const lib = dlopen(libraryPath(), {
+              NFD_GetError: { args: [], returns: "ptr" },
+              NFD_FreePathU8: { args: ["ptr"], returns: "void" },
+            });
+            try {
+              assert.equal(lib.symbols.NFD_GetError(), null);
+            } finally {
+              lib.close();
+            }
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.platform }}-${{ matrix.arch }}
+          path: lib/
+          if-no-files-found: error
+
+  package:
+    needs: native
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version-file: .node-version
+          run-install: false
+          cache: true
+      - run: vp install --frozen-lockfile
+      - run: vp check
+      - run: vp exec tsc --noEmit
+      - name: Remove previous binaries
+        run: |
+          vp exec node --input-type=module -e 'import { rmSync } from "node:fs"; rmSync("lib", { recursive: true, force: true });'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: lib
+          merge-multiple: true
+      - name: Check all binaries and license
+        run: |
+          vp exec node --input-type=module -e '
+            import { accessSync } from "node:fs";
+            accessSync("nativefiledialog/LICENSE");
+            for (const platform of ["darwin", "win32", "linux"]) {
+              for (const arch of ["x64", "arm64"]) {
+                const dir = `lib/${platform}-${arch}`;
+                const name = platform === "win32" ? "nfd.dll" : `libnfd.${platform === "darwin" ? "dylib" : "so"}`;
+                accessSync(`${dir}/${name}`);
+              }
+            }
+          '
+      - run: vp pack
+      - run: bun pm pack --destination artifacts --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: artifacts/*.tgz
+          if-no-files-found: error
+
+  update:
+    name: Create binary update PR
+    needs: package
+    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove previous binaries
+        run: |
+          node --input-type=module -e 'import { rmSync } from "node:fs"; rmSync("lib", { recursive: true, force: true });'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: lib
+          merge-multiple: true
+      - uses: peter-evans/create-pull-request@v8
+        with:
+          branch: automation/native-binaries
+          base: ${{ github.event.repository.default_branch }}
+          add-paths: lib/
+          commit-message: "chore: update native binaries"
+          title: "chore: update native binaries"
+          body: |
+            Update nativefiledialog-extended binaries for macOS, Windows, and Linux on x64 and arm64.
+
+            Built and packaged from ${{ github.sha }} in [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).

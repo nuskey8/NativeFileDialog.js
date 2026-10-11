@@ -1,0 +1,36 @@
+{
+  "name": "nativefiledialog.js",
+  "version": "0.1.0",
+  "description": "JS FFI bindings for nativefiledialog-extended using node:ffi and bun:ffi",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "lib",
+    "LICENSE",
+    "nativefiledialog/LICENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build:native": "cmake-js compile",
+    "build": "vp run build:native && vp pack",
+    "example": "node examples/dialog.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "@types/node": "^26.6.5",
+    "cmake-js": "^8.0.0",
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=26.1.0"
+  },
+  "packageManager": "bun@1.4.2"
+}

@@ -43,6 +43,6 @@ try {
 
 ## License
 
-This library is licensed under the [MIT](LICENSE). 
+This library is licensed under the [MIT](LICENSE).
 
 nativefiledialog-extended is licensed under the [zlib license](nativefiledialog/LICENSE).

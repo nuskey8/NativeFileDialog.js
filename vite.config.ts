@@ -4,7 +4,7 @@ const ignorePatterns = ["nativefiledialog/**", "dist/**", "lib/**", "build/**", 
 
 export default defineConfig({
   pack: {
-    entry: ["src/index.ts"],
+    entry: ["src/index.ts", "src/worker.ts"],
     format: ["esm"],
     dts: true,
     sourcemap: true,

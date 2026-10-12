@@ -19,8 +19,6 @@ bun add nativefiledialog.js
 
 ```ts
 import {
-  init,
-  quit,
   openDialog,
   openDialogMultiple,
   saveDialog,
@@ -28,20 +26,15 @@ import {
   pickFolderMultiple,
 } from "nativefiledialog.js";
 
-init();
-try {
-  const file = openDialog({
-    filterList: [{ name: "Images", spec: "png,jpg" }],
-    defaultPath: process.cwd(),
-    title: "Choose an image",
-  });
-  const files = openDialogMultiple({ filterList: [{ name: "Text", spec: "txt" }] });
-  const destination = saveDialog({ defaultName: "untitled.txt" });
-  const folder = pickFolder();
-  const folders = pickFolderMultiple();
-} finally {
-  quit();
-}
+const file = await openDialog({
+  filterList: [{ name: "Images", spec: "png,jpg" }],
+  defaultPath: process.cwd(),
+  title: "Choose an image",
+});
+const files = await openDialogMultiple({ filterList: [{ name: "Text", spec: "txt" }] });
+const destination = await saveDialog({ defaultName: "untitled.txt" });
+const folder = await pickFolder();
+const folders = await pickFolderMultiple();
 ```
 
 ## License

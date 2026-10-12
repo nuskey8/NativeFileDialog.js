@@ -1,6 +1,4 @@
 import {
-  init,
-  quit,
   openDialog,
   openDialogMultiple,
   saveDialog,
@@ -20,11 +18,6 @@ const name = process.argv[2] || "open";
 if (!Object.hasOwn(dialogs, name))
   throw new Error("Choose open, multiple, save, folder, or folders");
 
-init();
-try {
-  console.log(`Opening ${name} dialog…`);
-  const result = dialogs[name as keyof typeof dialogs]({ defaultPath: process.cwd() });
-  console.log(result === null ? "Cancelled" : result);
-} finally {
-  quit();
-}
+console.log(`Opening ${name} dialog…`);
+const result = await dialogs[name as keyof typeof dialogs]({ defaultPath: process.cwd() });
+console.log(result === null ? "Cancelled" : result);
